@@ -679,10 +679,7 @@ const createdOrLinkedAccount = (
   return RouteTreeGen.createNavigateUp()
 }
 
-const navigateUp = (
-  state,
-  action: WalletsGen.DidSetAccountAsDefaultPayload | WalletsGen.ChangedAccountNamePayload
-) => {
+const navigateUp = (state, action: WalletsGen.DidSetAccountAsDefaultPayload) => {
   if (actionHasError(action)) {
     // we don't want to nav on error
     return
@@ -1201,8 +1198,8 @@ function* walletsSaga(): Saga.SagaGenerator<any, any> {
     navigateToTransaction,
     'navigateToTransaction'
   )
-  yield* Saga.chainAction<WalletsGen.DidSetAccountAsDefaultPayload | WalletsGen.ChangedAccountNamePayload>(
-    [WalletsGen.didSetAccountAsDefault, WalletsGen.changedAccountName],
+  yield* Saga.chainAction<WalletsGen.DidSetAccountAsDefaultPayload>(
+    [WalletsGen.didSetAccountAsDefault],
     navigateUp,
     'navigateUp'
   )
