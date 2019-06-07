@@ -24,7 +24,6 @@ export const builtPaymentReceived = 'wallets:builtPaymentReceived'
 export const builtRequestReceived = 'wallets:builtRequestReceived'
 export const cancelPayment = 'wallets:cancelPayment'
 export const cancelRequest = 'wallets:cancelRequest'
-export const changeAccountName = 'wallets:changeAccountName'
 export const changeAirdrop = 'wallets:changeAirdrop'
 export const changeDisplayCurrency = 'wallets:changeDisplayCurrency'
 export const changeMobileOnlyMode = 'wallets:changeMobileOnlyMode'
@@ -121,7 +120,6 @@ type _CancelRequestPayload = {
   readonly ordinal?: ChatTypes.Ordinal
   readonly requestID: StellarRPCTypes.KeybaseRequestID
 }
-type _ChangeAccountNamePayload = {readonly accountID: Types.AccountID; readonly name: string}
 type _ChangeAirdropPayload = {readonly accept: boolean}
 type _ChangeDisplayCurrencyPayload = {readonly accountID: Types.AccountID; readonly code: Types.CurrencyCode}
 type _ChangeMobileOnlyModePayload = {readonly accountID: Types.AccountID; readonly enabled: boolean}
@@ -377,13 +375,6 @@ export const createChangeMobileOnlyMode = (
 export const createSetAccountAsDefault = (
   payload: _SetAccountAsDefaultPayload
 ): SetAccountAsDefaultPayload => ({payload, type: setAccountAsDefault})
-/**
- * Change the name of an account
- */
-export const createChangeAccountName = (payload: _ChangeAccountNamePayload): ChangeAccountNamePayload => ({
-  payload,
-  type: changeAccountName,
-})
 /**
  * Clear a payment or request that was being prepared
  */
@@ -940,10 +931,6 @@ export type CancelRequestPayload = {
   readonly payload: _CancelRequestPayload
   readonly type: 'wallets:cancelRequest'
 }
-export type ChangeAccountNamePayload = {
-  readonly payload: _ChangeAccountNamePayload
-  readonly type: 'wallets:changeAccountName'
-}
 export type ChangeAirdropPayload = {
   readonly payload: _ChangeAirdropPayload
   readonly type: 'wallets:changeAirdrop'
@@ -1284,7 +1271,6 @@ export type Actions =
   | BuiltRequestReceivedPayload
   | CancelPaymentPayload
   | CancelRequestPayload
-  | ChangeAccountNamePayload
   | ChangeAirdropPayload
   | ChangeDisplayCurrencyPayload
   | ChangeMobileOnlyModePayload
