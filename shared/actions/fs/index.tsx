@@ -968,12 +968,12 @@ const waitForKbfsDaemon = (state, action: ConfigGen.InstallerRanPayload | FsGen.
 const startManualCR = (state, action) =>
   RPCTypes.SimpleFSSimpleFSClearConflictStateRpcPromise({
     path: Constants.pathToRPCPath(action.payload.tlfPath),
-  }).then(() =>
-    FsGen.createTlfCrStatusChanged({
-      status: Types.ConflictState.InManualResolution,
-      tlfPath: action.payload.tlfPath,
-    })
-  ) // TODO: deal with errors
+  }).then(() => FsGen.createFavoritesLoad())
+
+const finishManualCR = (state, action) =>
+  RPCTypes.SimpleFSSimpleFSFinishResolvingConflictRpcPromise({
+    path: Constants.pathToRPCPath(action.payload.localViewTlfPath),
+  }).then(() => FsGen.createFavoritesLoad())
 
 const updateKbfsDaemonOnlineStatus = (
   state,
@@ -1124,6 +1124,10 @@ function* fsSaga(): Saga.SagaGenerator<any, any> {
     yield* Saga.chainAction<FsGen.StartManualConflictResolutionPayload>(
       FsGen.startManualConflictResolution,
       startManualCR
+    )
+    yield* Saga.chainAction<FsGen.FinishManualConflictResolutionPayload>(
+      FsGen.finishManualConflictResolution,
+      finishManualCR
     )
   }
 

@@ -31,6 +31,7 @@ export const favoriteIgnore = 'fs:favoriteIgnore'
 export const favoriteIgnoreError = 'fs:favoriteIgnoreError'
 export const favoritesLoad = 'fs:favoritesLoad'
 export const favoritesLoaded = 'fs:favoritesLoaded'
+export const finishManualConflictResolution = 'fs:finishManualConflictResolution'
 export const folderListLoad = 'fs:folderListLoad'
 export const folderListLoaded = 'fs:folderListLoaded'
 export const fsError = 'fs:fsError'
@@ -88,7 +89,6 @@ export const showMoveOrCopy = 'fs:showMoveOrCopy'
 export const showSystemFileManagerIntegrationBanner = 'fs:showSystemFileManagerIntegrationBanner'
 export const sortSetting = 'fs:sortSetting'
 export const startManualConflictResolution = 'fs:startManualConflictResolution'
-export const tlfCrStatusChanged = 'fs:tlfCrStatusChanged'
 export const tlfSyncConfigLoaded = 'fs:tlfSyncConfigLoaded'
 export const tlfSyncConfigsForAllSyncEnabledTlfsLoaded = 'fs:tlfSyncConfigsForAllSyncEnabledTlfsLoaded'
 export const triggerSendLinkToChat = 'fs:triggerSendLinkToChat'
@@ -142,6 +142,7 @@ type _FavoritesLoadedPayload = {
   readonly public: I.Map<string, Types.Tlf>
   readonly team: I.Map<string, Types.Tlf>
 }
+type _FinishManualConflictResolutionPayload = {readonly localViewTlfPath: Types.Path}
 type _FolderListLoadPayload = {readonly path: Types.Path; readonly refreshTag?: Types.RefreshTag}
 type _FolderListLoadedPayload = {
   readonly path: Types.Path
@@ -209,7 +210,6 @@ type _ShowMoveOrCopyPayload = {readonly initialDestinationParentPath: Types.Path
 type _ShowSystemFileManagerIntegrationBannerPayload = void
 type _SortSettingPayload = {readonly path: Types.Path; readonly sortSetting: Types.SortSetting}
 type _StartManualConflictResolutionPayload = {readonly tlfPath: Types.Path}
-type _TlfCrStatusChangedPayload = {readonly status: Types.ConflictState; readonly tlfPath: Types.Path}
 type _TlfSyncConfigLoadedPayload = {
   readonly tlfType: Types.TlfType
   readonly tlfName: string
@@ -308,6 +308,9 @@ export const createFavoritesLoaded = (payload: _FavoritesLoadedPayload): Favorit
   payload,
   type: favoritesLoaded,
 })
+export const createFinishManualConflictResolution = (
+  payload: _FinishManualConflictResolutionPayload
+): FinishManualConflictResolutionPayload => ({payload, type: finishManualConflictResolution})
 export const createFolderListLoad = (payload: _FolderListLoadPayload): FolderListLoadPayload => ({
   payload,
   type: folderListLoad,
@@ -498,10 +501,6 @@ export const createSortSetting = (payload: _SortSettingPayload): SortSettingPayl
 export const createStartManualConflictResolution = (
   payload: _StartManualConflictResolutionPayload
 ): StartManualConflictResolutionPayload => ({payload, type: startManualConflictResolution})
-export const createTlfCrStatusChanged = (payload: _TlfCrStatusChangedPayload): TlfCrStatusChangedPayload => ({
-  payload,
-  type: tlfCrStatusChanged,
-})
 export const createTlfSyncConfigLoaded = (
   payload: _TlfSyncConfigLoadedPayload
 ): TlfSyncConfigLoadedPayload => ({payload, type: tlfSyncConfigLoaded})
@@ -604,6 +603,10 @@ export type FavoritesLoadPayload = {
 export type FavoritesLoadedPayload = {
   readonly payload: _FavoritesLoadedPayload
   readonly type: 'fs:favoritesLoaded'
+}
+export type FinishManualConflictResolutionPayload = {
+  readonly payload: _FinishManualConflictResolutionPayload
+  readonly type: 'fs:finishManualConflictResolution'
 }
 export type FolderListLoadPayload = {
   readonly payload: _FolderListLoadPayload
@@ -809,10 +812,6 @@ export type StartManualConflictResolutionPayload = {
   readonly payload: _StartManualConflictResolutionPayload
   readonly type: 'fs:startManualConflictResolution'
 }
-export type TlfCrStatusChangedPayload = {
-  readonly payload: _TlfCrStatusChangedPayload
-  readonly type: 'fs:tlfCrStatusChanged'
-}
 export type TlfSyncConfigLoadedPayload = {
   readonly payload: _TlfSyncConfigLoadedPayload
   readonly type: 'fs:tlfSyncConfigLoaded'
@@ -876,6 +875,7 @@ export type Actions =
   | FavoriteIgnorePayload
   | FavoritesLoadPayload
   | FavoritesLoadedPayload
+  | FinishManualConflictResolutionPayload
   | FolderListLoadPayload
   | FolderListLoadedPayload
   | FsErrorPayload
@@ -933,7 +933,6 @@ export type Actions =
   | ShowSystemFileManagerIntegrationBannerPayload
   | SortSettingPayload
   | StartManualConflictResolutionPayload
-  | TlfCrStatusChangedPayload
   | TlfSyncConfigLoadedPayload
   | TlfSyncConfigsForAllSyncEnabledTlfsLoadedPayload
   | TriggerSendLinkToChatPayload
