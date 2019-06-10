@@ -89,8 +89,8 @@ func TestGetProxyType(t *testing.T) {
 	resetGlobals()
 	os.Clearenv()
 
-	default_env := NewEnv(nil, nil, makeLogGetter(t))
-	require.Equal(t, NoProxy, default_env.GetProxyType())
+	defaultEnv := NewEnv(nil, nil, makeLogGetter(t))
+	require.Equal(t, NoProxy, defaultEnv.GetProxyType())
 
 	mockedEnv := NewEnv(MockedConfigReader{}, MockedConfigReader{}, makeLogGetter(t))
 	require.Equal(t, NoProxy, mockedEnv.GetProxyType())
@@ -103,9 +103,9 @@ func TestGetProxyType(t *testing.T) {
 	require.Equal(t, Socks, mockedEnv.GetProxyType())
 
 	globalProxyType = "http_connect"
-	require.Equal(t, HttpConnect, mockedEnv.GetProxyType())
+	require.Equal(t, HTTPConnect, mockedEnv.GetProxyType())
 	globalProxyType = "HTTP_CONNECT"
-	require.Equal(t, HttpConnect, mockedEnv.GetProxyType())
+	require.Equal(t, HTTPConnect, mockedEnv.GetProxyType())
 
 	globalProxyType = "BOGUS"
 	require.Equal(t, NoProxy, mockedEnv.GetProxyType())
@@ -116,7 +116,7 @@ func TestGetProxyType(t *testing.T) {
 	os.Setenv("PROXY_TYPE", "Socks")
 	require.Equal(t, Socks, mockedEnv.GetProxyType())
 	os.Setenv("PROXY_TYPE", "http_connect")
-	require.Equal(t, HttpConnect, mockedEnv.GetProxyType())
+	require.Equal(t, HTTPConnect, mockedEnv.GetProxyType())
 }
 
 func TestGetProxy(t *testing.T) {
