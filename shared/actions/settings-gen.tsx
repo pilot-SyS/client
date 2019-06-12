@@ -50,6 +50,7 @@ export const onUpdatePGPSettings = 'settings:onUpdatePGPSettings'
 export const onUpdatePasswordError = 'settings:onUpdatePasswordError'
 export const onUpdatedPGPSettings = 'settings:onUpdatedPGPSettings'
 export const processorProfile = 'settings:processorProfile'
+export const saveProxyData = 'settings:saveProxyData'
 export const sendFeedback = 'settings:sendFeedback'
 export const setAllowDeleteAccount = 'settings:setAllowDeleteAccount'
 export const stop = 'settings:stop'
@@ -103,6 +104,7 @@ type _OnUpdatePGPSettingsPayload = void
 type _OnUpdatePasswordErrorPayload = {readonly error: Error}
 type _OnUpdatedPGPSettingsPayload = {readonly hasKeys: boolean}
 type _ProcessorProfilePayload = {readonly durationSeconds: number}
+type _SaveProxyDataPayload = {readonly proxyData: RPCTypes.ProxyData}
 type _SendFeedbackPayload = {readonly feedback: string; readonly sendLogs: boolean}
 type _SetAllowDeleteAccountPayload = {readonly allow: boolean}
 type _StopPayload = {readonly exitCode: RPCTypes.ExitCode}
@@ -295,6 +297,10 @@ export const createProcessorProfile = (payload: _ProcessorProfilePayload): Proce
   payload,
   type: processorProfile,
 })
+export const createSaveProxyData = (payload: _SaveProxyDataPayload): SaveProxyDataPayload => ({
+  payload,
+  type: saveProxyData,
+})
 export const createSendFeedback = (payload: _SendFeedbackPayload): SendFeedbackPayload => ({
   payload,
   type: sendFeedback,
@@ -477,6 +483,10 @@ export type ProcessorProfilePayload = {
   readonly payload: _ProcessorProfilePayload
   readonly type: 'settings:processorProfile'
 }
+export type SaveProxyDataPayload = {
+  readonly payload: _SaveProxyDataPayload
+  readonly type: 'settings:saveProxyData'
+}
 export type SendFeedbackPayload = {
   readonly payload: _SendFeedbackPayload
   readonly type: 'settings:sendFeedback'
@@ -553,6 +563,7 @@ export type Actions =
   | OnUpdatePasswordErrorPayload
   | OnUpdatedPGPSettingsPayload
   | ProcessorProfilePayload
+  | SaveProxyDataPayload
   | SendFeedbackPayload
   | SetAllowDeleteAccountPayload
   | StopPayload
