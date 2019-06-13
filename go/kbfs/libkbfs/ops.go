@@ -34,6 +34,7 @@ type op interface {
 	Refs() []data.BlockPointer
 	Unrefs() []data.BlockPointer
 	String() string
+	Plaintext() string
 	StringWithRefs(indent string) string
 	setWriterInfo(writerInfo)
 	getWriterInfo() writerInfo
@@ -267,6 +268,10 @@ func (oc *OpCommon) getFinalPath() data.Path {
 	return oc.finalPath
 }
 
+func (oc *OpCommon) obfuscatedName(name string) data.PathPartString {
+	return data.NewPathPartString(name, oc.finalPath.Obfuscator())
+}
+
 func (oc *OpCommon) setLocalTimestamp(t time.Time) {
 	oc.localTimestamp = t
 }
@@ -399,7 +404,20 @@ func (co *createOp) checkValid() error {
 	return co.checkUpdatesValid()
 }
 
+func (co *createOp) obfuscatedNewName() data.PathPartString {
+	return co.OpCommon.obfuscatedName(co.NewName)
+}
+
 func (co *createOp) String() string {
+	ob := co.finalPath.Obfuscator()
+	res := fmt.Sprintf("create %s (%s)", co.obfuscatedNewName(), co.Type)
+	if co.renamed {
+		res += " (renamed)"
+	}
+	return res
+}
+
+func (co *createOp) Plaintext() string {
 	res := fmt.Sprintf("create %s (%s)", co.NewName, co.Type)
 	if co.renamed {
 		res += " (renamed)"
@@ -594,7 +612,16 @@ func (ro *rmOp) checkValid() error {
 	return ro.checkUpdatesValid()
 }
 
+func (ro *rmOp) obfuscatedOldName() data.PathPartString {
+	return co.OpCommon.obfuscatedName(ro.OldName)
+}
+
 func (ro *rmOp) String() string {
+	ob := ro.finalPath.Obfuscator()
+	return fmt.Sprintf("rm %s", ro.obfuscatedOldName())
+}
+
+func (ro *rmOp) Plaintext() string {
 	return fmt.Sprintf("rm %s", ro.OldName)
 }
 
@@ -748,6 +775,12 @@ func (ro *renameOp) checkValid() error {
 }
 
 func (ro *renameOp) String() string {
+	ob := ro.finalPath.Obfuscator()
+	return fmt.Sprintf("rename %s -> %s (%s)",
+		ob.Obfuscate(ro.OldName), ob.Obfuscate(ro.NewName), ro.RenamedType)
+}
+
+func (ro *renameOp) Plaintext() string {
 	return fmt.Sprintf("rename %s -> %s (%s)",
 		ro.OldName, ro.NewName, ro.RenamedType)
 }
@@ -926,6 +959,10 @@ func (so *syncOp) String() string {
 		writes = append(writes, fmt.Sprintf("{off=%d, len=%d}", r.Off, r.Len))
 	}
 	return fmt.Sprintf("sync [%s]", strings.Join(writes, ", "))
+}
+
+func (so *syncOp) Plaintext() string {
+	return so.String()
 }
 
 func (so *syncOp) StringWithRefs(indent string) string {
@@ -1212,6 +1249,11 @@ func (sao *setAttrOp) checkValid() error {
 }
 
 func (sao *setAttrOp) String() string {
+	ob := sao.finalPath.Obfuscator()
+	return fmt.Sprintf("setAttr %s (%s)", ob.Obfuscate(sao.Name), sao.Attr)
+}
+
+func (sao *setAttrOp) Plaintext() string {
 	return fmt.Sprintf("setAttr %s (%s)", sao.Name, sao.Attr)
 }
 
@@ -1324,6 +1366,10 @@ func (ro *resolutionOp) String() string {
 	return "resolution"
 }
 
+func (ro *resolutionOp) Plaintext() string {
+	return ro.String()
+}
+
 func (ro *resolutionOp) StringWithRefs(indent string) string {
 	res := ro.String() + "\n"
 	res += ro.stringWithRefs(indent)
@@ -1382,6 +1428,10 @@ func (ro *rekeyOp) checkValid() error {
 
 func (ro *rekeyOp) String() string {
 	return "rekey"
+}
+
+func (ro *rekeyOp) Plaintext() string {
+	return ro.String()
 }
 
 func (ro *rekeyOp) StringWithRefs(indent string) string {
@@ -1443,6 +1493,10 @@ func (gco *GCOp) checkValid() error {
 
 func (gco *GCOp) String() string {
 	return fmt.Sprintf("gc %d", gco.LatestRev)
+}
+
+func (gco *GCOp) Plaintext() string {
+	return gco.String()
 }
 
 // StringWithRefs implements the op interface for GCOp.

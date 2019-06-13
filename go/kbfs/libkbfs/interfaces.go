@@ -2189,7 +2189,8 @@ type NodeCache interface {
 // (duplicating pointer for any indirect blocks) and generates a new
 // random temporary block ID for it.  It returns the new BlockPointer,
 // and internally saves the block for future uses.
-type fileBlockDeepCopier func(context.Context, string, data.BlockPointer) (
+type fileBlockDeepCopier func(
+	context.Context, data.PathPartString, data.BlockPointer) (
 	data.BlockPointer, error)
 
 // crAction represents a specific action to take as part of the

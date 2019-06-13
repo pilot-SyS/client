@@ -311,7 +311,7 @@ func (cc *crChain) identifyType(ctx context.Context, fbo *folderBlockOps,
 		FolderBranch: fbo.folderBranch,
 		Path: []data.PathNode{{
 			BlockPointer: parentMostRecent,
-			Name:         "",
+			Name:         data.PathPartString{},
 		}},
 	}
 	parentDD, cleanupFn := fbo.newDirDataWithDBM(
@@ -923,8 +923,9 @@ func newCRChains(
 					FolderBranch: fbo.folderBranch,
 					Path: []data.PathNode{{
 						BlockPointer: ptr,
-						Name: fmt.Sprintf(
-							"<MD rev %d>", chainMD.Revision()),
+						Name: data.NewPathPartString(
+							fmt.Sprintf("<MD rev %d>", chainMD.Revision()),
+							nil),
 					}},
 				})
 			if err != nil {
@@ -1147,7 +1148,7 @@ func (ccs *crChains) findPathForDeleted(mostRecent data.BlockPointer) data.Path 
 					if !p.IsValid() {
 						p = ccs.findPathForDeleted(ptr)
 					}
-					return p.ChildPath(ro.OldName, mostRecent)
+					return p.ChildPath(ro.obfuscatedOldName(), mostRecent)
 				}
 			}
 		}
@@ -1171,7 +1172,7 @@ func (ccs *crChains) findPathForDeleted(mostRecent data.BlockPointer) data.Path 
 		},
 		Path: []data.PathNode{{
 			BlockPointer: rootMostRecent,
-			Name:         mostRecent.String(),
+			Name:         data.NewPathPartString(mostRecent.String(), nil),
 		}},
 	}
 }
@@ -1193,7 +1194,7 @@ func (ccs *crChains) findPathForCreated(createdChain *crChain) data.Path {
 					if !p.IsValid() {
 						p = ccs.findPathForCreated(chain)
 					}
-					return p.ChildPath(co.NewName, mostRecent)
+					return p.ChildPath(co.obfuscatedNewName(), mostRecent)
 				}
 			}
 		}
@@ -1217,7 +1218,7 @@ func (ccs *crChains) findPathForCreated(createdChain *crChain) data.Path {
 		},
 		Path: []data.PathNode{{
 			BlockPointer: rootMostRecent,
-			Name:         mostRecent.String(),
+			Name:         data.NewPathPartString(mostRecent.String(), nil),
 		}},
 	}
 }
