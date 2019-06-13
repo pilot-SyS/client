@@ -774,10 +774,18 @@ func (ro *renameOp) checkValid() error {
 	return ro.checkUpdatesValid()
 }
 
+func (ro *renameOp) obfuscatedOldName() data.PathPartString {
+	return co.OpCommon.obfuscatedName(ro.OldName)
+}
+
+func (ro *renameOp) obfuscatedNewName() data.PathPartString {
+	return co.OpCommon.obfuscatedName(ro.NewName)
+}
+
 func (ro *renameOp) String() string {
 	ob := ro.finalPath.Obfuscator()
 	return fmt.Sprintf("rename %s -> %s (%s)",
-		ob.Obfuscate(ro.OldName), ob.Obfuscate(ro.NewName), ro.RenamedType)
+		ro.obfuscatedOldName(), ro.obfuscatedNewName(), ro.RenamedType)
 }
 
 func (ro *renameOp) Plaintext() string {
