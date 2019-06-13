@@ -1756,7 +1756,7 @@ type blockServerLocal interface {
 type NodeChange struct {
 	Node Node
 	// Basenames of entries added/removed.
-	DirUpdated  []string
+	DirUpdated  []data.PathPartString
 	FileUpdated []WriteRange
 }
 
@@ -2128,7 +2128,8 @@ type NodeCache interface {
 	// "parent" parameters here.  name must not be empty. Returns
 	// an error if parent cannot be found.
 	GetOrCreate(
-		ptr data.BlockPointer, name string, parent Node, et data.EntryType) (Node, error)
+		ptr data.BlockPointer, name data.PathPartString, parent Node,
+		et data.EntryType) (Node, error)
 	// Get returns the Node associated with the given ptr if one
 	// already exists.  Otherwise, it returns nil.
 	Get(ref data.BlockRef) Node
@@ -2145,7 +2146,7 @@ type NodeCache interface {
 	// called to undo the effect of the move (or `nil` if nothing
 	// needs to be done); if newParent cannot be found, it returns an
 	// error and a `nil` undo function.
-	Move(ref data.BlockRef, newParent Node, newName string) (
+	Move(ref data.BlockRef, newParent Node, newName data.PathPartString) (
 		undoFn func(), err error)
 	// Unlink set the corresponding node's parent to nil and caches
 	// the provided path in case the node is still open. NodeCache
@@ -2154,7 +2155,8 @@ type NodeCache interface {
 	// already that shouldn't be reflected in the cached path.  It
 	// returns a function that can be called to undo the effect of the
 	// unlink (or `nil` if nothing needs to be done).
-	Unlink(ref data.BlockRef, oldPath data.Path, oldDe data.DirEntry) (undoFn func())
+	Unlink(ref data.BlockRef, oldPath data.Path, oldDe data.DirEntry) (
+		undoFn func())
 	// IsUnlinked returns whether `Unlink` has been called for the
 	// reference behind this node.
 	IsUnlinked(node Node) bool

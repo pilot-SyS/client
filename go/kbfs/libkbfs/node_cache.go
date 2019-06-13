@@ -98,8 +98,8 @@ func (ncs *nodeCacheStandard) makeNodeStandardForEntryLocked(
 
 // GetOrCreate implements the NodeCache interface for nodeCacheStandard.
 func (ncs *nodeCacheStandard) GetOrCreate(
-	ptr data.BlockPointer, name string, parent Node, et data.EntryType) (
-	n Node, err error) {
+	ptr data.BlockPointer, name data.PathPartString, parent Node,
+	et data.EntryType) (n Node, err error) {
 	var rootWrappers []func(Node) Node
 	defer func() {
 		if n != nil {
@@ -220,7 +220,8 @@ func (ncs *nodeCacheStandard) UpdatePointer(
 
 // Move implements the NodeCache interface for nodeCacheStandard.
 func (ncs *nodeCacheStandard) Move(
-	ref data.BlockRef, newParent Node, newName string) (undoFn func(), err error) {
+	ref data.BlockRef, newParent Node, newName data.PathPartString) (
+	undoFn func(), err error) {
 	if ref == (data.BlockRef{}) {
 		return nil, nil
 	}
