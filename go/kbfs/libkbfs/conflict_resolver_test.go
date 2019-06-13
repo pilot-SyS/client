@@ -263,9 +263,9 @@ func testCRSharedFolderForUsers(
 	rootNode := GetRootNodeOrBust(ctx, t, configs[createAs], name, tlf.Private)
 	dir := rootNode
 	for _, d := range dirs {
-		dirNext, _, err := kbfsOps.CreateDir(ctx, dir, d)
+		dirNext, _, err := kbfsOps.CreateDir(ctx, dir, dir.ChildName(d))
 		if _, ok := err.(data.NameExistsError); ok {
-			dirNext, _, err = kbfsOps.Lookup(ctx, dir, d)
+			dirNext, _, err = kbfsOps.Lookup(ctx, dir, dir.ChildName(d))
 			if err != nil {
 				t.Fatalf("Couldn't lookup dir: %v", err)
 			}
@@ -291,7 +291,7 @@ func testCRSharedFolderForUsers(
 		dir := rootNode
 		for _, d := range dirs {
 			var err error
-			dir, _, err = kbfsOps.Lookup(ctx, dir, d)
+			dir, _, err = kbfsOps.Lookup(ctx, dir, dir.ChildName(d))
 			if err != nil {
 				t.Fatalf("Couldn't lookup dir: %v", err)
 			}
@@ -437,7 +437,8 @@ func TestCRMergedChainsSimple(t *testing.T) {
 	}
 
 	// user1 makes a file
-	_, _, err = config1.KBFSOps().CreateFile(ctx, dir1, "file1", false, NoExcl)
+	_, _, err = config1.KBFSOps().CreateFile(
+		ctx, dir1, dir1.ChildName("file1"), false, NoExcl)
 	if err != nil {
 		t.Fatalf("Couldn't create file: %v", err)
 	}
@@ -451,7 +452,8 @@ func TestCRMergedChainsSimple(t *testing.T) {
 	cr2.Shutdown()
 
 	// user2 makes a file (causes a conflict, and goes unstaged)
-	_, _, err = config2.KBFSOps().CreateFile(ctx, dir2, "file2", false, NoExcl)
+	_, _, err = config2.KBFSOps().CreateFile(
+		ctx, dir2, dir2.ChildName("file2"), false, NoExcl)
 	if err != nil {
 		t.Fatalf("Couldn't create file: %v", err)
 	}
@@ -467,7 +469,8 @@ func TestCRMergedChainsSimple(t *testing.T) {
 	mergedPaths[expectedUnmergedPath.TailPointer()] = mergedPath
 	expectedActions := map[data.BlockPointer]crActionList{
 		mergedPath.TailPointer(): {&copyUnmergedEntryAction{
-			"file2", "file2", "", false, false, data.DirEntry{}, nil}},
+			dir2.ChildName("file2"), dir2.ChildName("file2"), "", false, false,
+			data.DirEntry{}, nil}},
 	}
 	testCRCheckPathsAndActions(t, cr2, []data.Path{expectedUnmergedPath},
 		mergedPaths, nil, expectedActions)
@@ -508,7 +511,8 @@ func TestCRMergedChainsDifferentDirectories(t *testing.T) {
 	}
 
 	// user1 makes a file in dir A
-	_, _, err = config1.KBFSOps().CreateFile(ctx, dirA1, "file1", false, NoExcl)
+	_, _, err = config1.KBFSOps().CreateFile(
+		ctx, dirA1, dirA1.ChildName("file1"), false, NoExcl)
 	if err != nil {
 		t.Fatalf("Couldn't create file: %v", err)
 	}
@@ -522,7 +526,8 @@ func TestCRMergedChainsDifferentDirectories(t *testing.T) {
 	cr2.Shutdown()
 
 	// user2 makes a file in dir B
-	_, _, err = config2.KBFSOps().CreateFile(ctx, dirB2, "file2", false, NoExcl)
+	_, _, err = config2.KBFSOps().CreateFile(
+		ctx, dirB2, dirB2.ChildName("file2"), false, NoExcl)
 	if err != nil {
 		t.Fatalf("Couldn't create file: %v", err)
 	}
@@ -538,7 +543,8 @@ func TestCRMergedChainsDifferentDirectories(t *testing.T) {
 	mergedPaths[expectedUnmergedPath.TailPointer()] = mergedPath
 	expectedActions := map[data.BlockPointer]crActionList{
 		mergedPath.TailPointer(): {&copyUnmergedEntryAction{
-			"file2", "file2", "", false, false, data.DirEntry{}, nil}},
+			dirB2.ChildName("file2"), dirB2.ChildName("file2"), "", false,
+			false, data.DirEntry{}, nil}},
 	}
 	testCRCheckPathsAndActions(t, cr2, []data.Path{expectedUnmergedPath},
 		mergedPaths, nil, expectedActions)
@@ -590,11 +596,11 @@ func TestCRMergedChainsDeletedDirectories(t *testing.T) {
 	}
 
 	// user1 deletes dirB and dirC
-	err = config1.KBFSOps().RemoveDir(ctx, dirB1, "dirC")
+	err = config1.KBFSOps().RemoveDir(ctx, dirB1, dirB1.ChildName("dirC"))
 	if err != nil {
 		t.Fatalf("Couldn't remove dir: %v", err)
 	}
-	err = config1.KBFSOps().RemoveDir(ctx, dirA1, "dirB")
+	err = config1.KBFSOps().RemoveDir(ctx, dirA1, dirA1.ChildName("dirB"))
 	if err != nil {
 		t.Fatalf("Couldn't remove dir: %v", err)
 	}
@@ -604,7 +610,8 @@ func TestCRMergedChainsDeletedDirectories(t *testing.T) {
 	}
 
 	// user2 makes a file in dir C
-	_, _, err = config2.KBFSOps().CreateFile(ctx, dirC2, "file2", false, NoExcl)
+	_, _, err = config2.KBFSOps().CreateFile(
+		ctx, dirC2, dirC2.ChildName("file2"), false, NoExcl)
 	if err != nil {
 		t.Fatalf("Couldn't create file: %v", err)
 	}
@@ -623,11 +630,11 @@ func TestCRMergedChainsDeletedDirectories(t *testing.T) {
 	mergedPath := cr1.fbo.nodeCache.PathFromNode(dirA1)
 	mergedPath.Path = append(mergedPath.Path, data.PathNode{
 		BlockPointer: dirBPtr,
-		Name:         "dirB",
+		Name:         dirA1.ChildName("dirB"),
 	})
 	mergedPath.Path = append(mergedPath.Path, data.PathNode{
 		BlockPointer: dirCPtr,
-		Name:         "dirC",
+		Name:         dirB1.ChildName("dirC"),
 	})
 	mergedPaths[expectedUnmergedPath.TailPointer()] = mergedPath
 
@@ -638,11 +645,14 @@ func TestCRMergedChainsDeletedDirectories(t *testing.T) {
 
 	dirAPtr1 := cr1.fbo.nodeCache.PathFromNode(dirA1).TailPointer()
 	expectedActions := map[data.BlockPointer]crActionList{
-		dirCPtr: {&copyUnmergedEntryAction{"file2", "file2", "",
+		dirCPtr: {&copyUnmergedEntryAction{
+			dirC2.ChildName("file2"), dirC2.ChildName("file2"), "",
 			false, false, data.DirEntry{}, nil}},
-		dirBPtr: {&copyUnmergedEntryAction{"dirC", "dirC", "", false, false,
+		dirBPtr: {&copyUnmergedEntryAction{
+			dirB1.ChildName("dirC"), dirB1.ChildName("dirC"), "", false, false,
 			data.DirEntry{}, nil}},
-		dirAPtr1: {&copyUnmergedEntryAction{"dirB", "dirB", "", false, false,
+		dirAPtr1: {&copyUnmergedEntryAction{
+			dirA1.ChildName("dirB"), dirA1.ChildName("dirB"), "", false, false,
 			data.DirEntry{}, nil}},
 	}
 
@@ -695,11 +705,13 @@ func TestCRMergedChainsRenamedDirectory(t *testing.T) {
 	}
 
 	// user1 makes /dirA/dirD and renames dirC into it
-	dirD1, _, err := config1.KBFSOps().CreateDir(ctx, dirA1, "dirD")
+	dirD1, _, err := config1.KBFSOps().CreateDir(
+		ctx, dirA1, dirA1.ChildName("dirD"))
 	if err != nil {
 		t.Fatalf("Couldn't make dir: %v", err)
 	}
-	err = config1.KBFSOps().Rename(ctx, dirB1, "dirC", dirD1, "dirC")
+	err = config1.KBFSOps().Rename(
+		ctx, dirB1, dirB1.ChildName("dirC"), dirD1, "dirC")
 	if err != nil {
 		t.Fatalf("Couldn't remove dir: %v", err)
 	}
