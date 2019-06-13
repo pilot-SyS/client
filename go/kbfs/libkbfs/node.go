@@ -29,7 +29,7 @@ type nodeCore struct {
 }
 
 func newNodeCore(
-	ptr data.BlockPointer, name string, parent Node,
+	ptr data.BlockPointer, name data.PathPartString, parent Node,
 	cache *nodeCacheStandard, et data.EntryType) *nodeCore {
 	return &nodeCore{
 		pathNode: &data.PathNode{
@@ -99,7 +99,7 @@ func (n *nodeStandard) GetFolderBranch() data.FolderBranch {
 func (n *nodeStandard) GetBasename() data.PathPartString {
 	if len(n.core.cachedPath.Path) > 0 {
 		// Must be unlinked.
-		return ""
+		return data.PathPartString{}
 	}
 	return n.core.pathNode.Name
 }

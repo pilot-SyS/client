@@ -520,8 +520,9 @@ func reembedBlockChanges(ctx context.Context, codec kbfscodec.Codec,
 		},
 		Path: []data.PathNode{{
 			BlockPointer: info.BlockPointer,
-			Name: fmt.Sprintf("<MD with block change pointer %s>",
-				info.BlockPointer),
+			Name: data.PathPartString(
+				fmt.Sprintf("<MD with block change pointer %s>",
+					info.BlockPointer), nil),
 		}},
 	}
 	getter := func(ctx context.Context, kmd libkey.KeyMetadata, ptr data.BlockPointer,
