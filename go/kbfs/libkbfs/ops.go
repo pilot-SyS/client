@@ -22,7 +22,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// op represents a single file-system remote-sync operation
+// op represents a single file-system remote-sync operation. Note that
+// ops store and marshal any filenames in plaintext fields, so the
+// accessed fields must be handled carefully.  `String()` prints
+// obfuscated filenames, however.
 type op interface {
 	AddRefBlock(ptr data.BlockPointer)
 	DelRefBlock(ptr data.BlockPointer)

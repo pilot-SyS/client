@@ -274,6 +274,11 @@ type Node interface {
 // Context derived from it), allowing the caller to determine whether
 // the notification is a result of their own action or an external
 // action.
+//
+// Each directory and file name is specified with a
+// `data.PathPartString`, to protect against accidentally logging
+// plaintext filenames.  These can be easily created from the parent
+// node's `Node` object with the `ChildName` function.
 type KBFSOps interface {
 	// GetFavorites returns the logged-in user's list of favorite
 	// top-level folders.  This is a remote-access operation when the cache
