@@ -30,7 +30,10 @@ func setupDirDataTest(t *testing.T, maxPtrsPerBlock, numDirEntries int) (
 		DirectType: DirectBlock,
 	}
 	id := tlf.FakeID(1, tlf.Private)
-	dir := Path{FolderBranch{Tlf: id}, []PathNode{{ptr, "dir"}}}
+	dir := Path{
+		FolderBranch{Tlf: id},
+		[]PathNode{{ptr, NewPathPartString("dir", nil)}},
+	}
 	chargedTo := keybase1.MakeTestUID(1).AsUserOrTeam()
 	bsplit := &BlockSplitterSimple{10, maxPtrsPerBlock, 10, numDirEntries}
 	kmd := libkeytest.NewEmptyKeyMetadata(id, 1)

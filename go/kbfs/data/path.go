@@ -47,7 +47,8 @@ func (p Path) IsValidForNotification() bool {
 		return false
 	}
 
-	return len(p.Path[0].Name) > 0 && !strings.HasPrefix(p.Path[0].Name, "<")
+	namePlain := p.Path[0].Name.Plaintext()
+	return len(namePlain) > 0 && !strings.HasPrefix(namePlain, "<")
 }
 
 // HasValidParent returns true if this path is valid and
@@ -58,7 +59,7 @@ func (p Path) HasValidParent() bool {
 
 // TailName returns the name of the final node in the Path. Must be
 // called with a valid path.
-func (p Path) TailName() string {
+func (p Path) TailName() PathPartString {
 	return p.Path[len(p.Path)-1].Name
 }
 
@@ -88,18 +89,38 @@ func (p Path) DebugString() string {
 func (p Path) String() string {
 	names := make([]string, 0, len(p.Path))
 	for _, node := range p.Path {
-		names = append(names, node.Name)
+		names = append(names, node.Name.String())
 	}
 	return strings.Join(names, "/")
 }
 
-// CanonicalPathString returns canonical representation of the full path,
-// always prefaced by /keybase. This may require conversion to a platform
-// specific path, for example, by replacing /keybase with the appropriate drive
-// letter on Windows. It also, might need conversion if on a different run mode,
-// for example, /keybase.staging on Unix type platforms.
+// Plaintext returns an unobfuscated string for this path.
+func (p Path) Plaintext() string {
+	names := make([]string, 0, len(p.Path))
+	for _, node := range p.Path {
+		names = append(names, node.Name.Plaintext())
+	}
+	return strings.Join(names, "/")
+}
+
+// CanonicalPathString returns an obfuscated canonical
+// representation of the full path, always prefaced by /keybase. This
+// may require conversion to a platform specific path, for example, by
+// replacing /keybase with the appropriate drive letter on Windows. It
+// also, might need conversion if on a different run mode, for
+// example, /keybase.staging on Unix type platforms.
 func (p Path) CanonicalPathString() string {
 	return tlfhandle.BuildCanonicalPathForTlf(p.Tlf, p.String())
+}
+
+// CanonicalPathPlaintext returns an un-obfuscated canonical
+// representation of the full path, always prefaced by /keybase. This
+// may require conversion to a platform specific path, for example, by
+// replacing /keybase with the appropriate drive letter on Windows. It
+// also, might need conversion if on a different run mode, for
+// example, /keybase.staging on Unix type platforms.
+func (p Path) CanonicalPathPlaintext() string {
+	return tlfhandle.BuildCanonicalPathForTlf(p.Tlf, p.Plaintext())
 }
 
 // ParentPath returns a new Path representing the parent subdirectory
@@ -112,7 +133,7 @@ func (p Path) ParentPath() *Path {
 
 // ChildPath returns a new Path with the addition of a new entry
 // with the given name and BlockPointer.
-func (p Path) ChildPath(name string, ptr BlockPointer) Path {
+func (p Path) ChildPath(name PathPartString, ptr BlockPointer) Path {
 	child := Path{
 		FolderBranch: p.FolderBranch,
 		Path:         make([]PathNode, len(p.Path), len(p.Path)+1),
@@ -124,15 +145,20 @@ func (p Path) ChildPath(name string, ptr BlockPointer) Path {
 
 // ChildPathNoPtr returns a new Path with the addition of a new entry
 // with the given name.  That final PathNode will have no BlockPointer.
-func (p Path) ChildPathNoPtr(name string) Path {
+func (p Path) ChildPathNoPtr(name PathPartString) Path {
 	return p.ChildPath(name, BlockPointer{})
+}
+
+// Obfuscator returns the obfuscator of the tail node in this path.
+func (p Path) Obfuscator() Obfuscator {
+	return p.Path[len(p.Path)-1].Name.Obfuscator()
 }
 
 // PathNode is a single node along an KBFS path, pointing to the top
 // block for that node of the path.
 type PathNode struct {
 	BlockPointer
-	Name string
+	Name PathPartString
 }
 
 // IsValid returns true if this node contains a valid block pointer.
