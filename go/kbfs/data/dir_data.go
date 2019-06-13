@@ -79,6 +79,10 @@ func (dd *DirData) GetTopBlock(ctx context.Context, rtype BlockReqType) (
 	return topBlock, nil
 }
 
+func (dd *DirData) obfuscator() Obfuscator {
+	return dd.tree.file.Obfuscator()
+}
+
 // GetChildren returns a map of all the child EntryInfos in this
 // directory.
 func (dd *DirData) GetChildren(ctx context.Context) (
@@ -105,7 +109,7 @@ func (dd *DirData) GetChildren(ctx context.Context) (
 			if hiddenEntries[k] {
 				continue
 			}
-			children[NewPathPartString(k, dd.obfuscator)] = de.EntryInfo
+			children[NewPathPartString(k, dd.obfuscator())] = de.EntryInfo
 		}
 	}
 	return children, nil
@@ -134,7 +138,7 @@ func (dd *DirData) GetEntries(ctx context.Context) (
 	children = make(map[PathPartString]DirEntry, numEntries)
 	for _, b := range blocks {
 		for k, de := range b.(*DirBlock).Children {
-			children[NewPathPartString(k, dd.obfuscator)] = de
+			children[NewPathPartString(k, dd.obfuscator())] = de
 		}
 	}
 	return children, nil
