@@ -43,7 +43,7 @@ func newNodeCore(
 }
 
 func newNodeCoreForDir(
-	ptr data.BlockPointer, name string, parent Node,
+	ptr data.BlockPointer, name data.PathPartString, parent Node,
 	cache *nodeCacheStandard, obfuscator data.Obfuscator) *nodeCore {
 	nc := newNodeCore(ptr, name, parent, cache, data.Dir)
 	nc.obfuscator = obfuscator

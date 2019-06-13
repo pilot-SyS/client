@@ -113,7 +113,7 @@ func (ncs *nodeCacheStandard) GetOrCreate(
 		panic(InvalidBlockRefError{ptr.Ref()})
 	}
 
-	if name == "" {
+	if name.Plaintext() == "" {
 		return nil, EmptyNameError{ptr.Ref()}
 	}
 
@@ -232,7 +232,7 @@ func (ncs *nodeCacheStandard) Move(
 		panic(InvalidBlockRefError{ref})
 	}
 
-	if newName == "" {
+	if newName.Plaintext() == "" {
 		return nil, EmptyNameError{ref}
 	}
 
@@ -291,7 +291,7 @@ func (ncs *nodeCacheStandard) Unlink(
 	entry.core.cachedPath = oldPath
 	entry.core.cachedDe = oldDe
 	entry.core.parent = nil
-	entry.core.pathNode.Name = ""
+	entry.core.pathNode.Name = data.PathPartString{}
 
 	return func() {
 		entry.core.cachedPath = data.Path{}
