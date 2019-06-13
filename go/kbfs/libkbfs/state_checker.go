@@ -212,8 +212,8 @@ func (sc *StateChecker) CheckMergedState(ctx context.Context, tlfID tlf.ID) erro
 					Tlf: tlfID, Branch: data.MasterBranch},
 				Path: []data.PathNode{{
 					BlockPointer: info.BlockPointer,
-					Name: fmt.Sprintf(
-						"<MD with revision %d>", rmd.Revision()),
+					Name: data.NewPathPartString(fmt.Sprintf(
+						"<MD with revision %d>", rmd.Revision()), nil),
 				}}}
 			err := sc.findAllFileBlocks(ctx, lState, ops, rmd.ReadOnly(),
 				file, actualLiveBlocks)

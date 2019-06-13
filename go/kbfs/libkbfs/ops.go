@@ -408,11 +408,10 @@ func (co *createOp) checkValid() error {
 }
 
 func (co *createOp) obfuscatedNewName() data.PathPartString {
-	return co.OpCommon.obfuscatedName(co.NewName)
+	return co.obfuscatedName(co.NewName)
 }
 
 func (co *createOp) String() string {
-	ob := co.finalPath.Obfuscator()
 	res := fmt.Sprintf("create %s (%s)", co.obfuscatedNewName(), co.Type)
 	if co.renamed {
 		res += " (renamed)"
@@ -455,8 +454,8 @@ func (co *createOp) checkConflict(
 					return nil, err
 				}
 				return &renameMergedAction{
-					fromName: co.NewName,
-					toName:   toName,
+					fromName: co.obfuscatedNewName(),
+					toName:   co.obfuscatedName(toName),
 					symPath:  co.crSymPath,
 				}, nil
 			}
@@ -467,8 +466,8 @@ func (co *createOp) checkConflict(
 				return nil, err
 			}
 			return &renameUnmergedAction{
-				fromName: co.NewName,
-				toName:   toName,
+				fromName: co.obfuscatedNewName(),
+				toName:   co.obfuscatedName(toName),
 				symPath:  co.crSymPath,
 			}, nil
 		}
@@ -488,8 +487,8 @@ func (co *createOp) checkConflict(
 				return nil, err
 			}
 			return &copyUnmergedEntryAction{
-				fromName: co.NewName,
-				toName:   toName,
+				fromName: co.obfuscatedNewName(),
+				toName:   co.obfuscatedName(toName),
 				symPath:  co.crSymPath,
 				unique:   true,
 			}, nil
@@ -501,16 +500,17 @@ func (co *createOp) checkConflict(
 }
 
 func (co *createOp) getDefaultAction(mergedPath data.Path) crAction {
+	newName := co.obfuscatedNewName()
 	if co.forceCopy {
 		return &renameUnmergedAction{
-			fromName: co.NewName,
-			toName:   co.NewName,
+			fromName: newName,
+			toName:   newName,
 			symPath:  co.crSymPath,
 		}
 	}
 	return &copyUnmergedEntryAction{
-		fromName: co.NewName,
-		toName:   co.NewName,
+		fromName: newName,
+		toName:   newName,
 		symPath:  co.crSymPath,
 	}
 }
@@ -543,7 +543,7 @@ func (co *createOp) ToEditNotification(
 	rev kbfsmd.Revision, revTime time.Time, device kbfscrypto.VerifyingKey,
 	uid keybase1.UID, tlfID tlf.ID) *kbfsedits.NotificationMessage {
 	n := makeBaseEditNotification(rev, revTime, device, uid, tlfID, co.Type)
-	n.Filename = co.getFinalPath().ChildPathNoPtr(co.NewName).
+	n.Filename = co.getFinalPath().ChildPathNoPtr(co.obfuscatedNewName()).
 		CanonicalPathPlaintext()
 	n.Type = kbfsedits.NotificationCreate
 	return &n
@@ -616,11 +616,10 @@ func (ro *rmOp) checkValid() error {
 }
 
 func (ro *rmOp) obfuscatedOldName() data.PathPartString {
-	return co.OpCommon.obfuscatedName(ro.OldName)
+	return ro.obfuscatedName(ro.OldName)
 }
 
 func (ro *rmOp) String() string {
-	ob := ro.finalPath.Obfuscator()
 	return fmt.Sprintf("rm %s", ro.obfuscatedOldName())
 }
 
@@ -660,7 +659,7 @@ func (ro *rmOp) getDefaultAction(mergedPath data.Path) crAction {
 	if ro.dropThis {
 		return &dropUnmergedAction{op: ro}
 	}
-	return &rmMergedEntryAction{name: ro.OldName}
+	return &rmMergedEntryAction{name: ro.obfuscatedOldName()}
 }
 
 func (ro *rmOp) ToEditNotification(
@@ -668,7 +667,7 @@ func (ro *rmOp) ToEditNotification(
 	uid keybase1.UID, tlfID tlf.ID) *kbfsedits.NotificationMessage {
 	n := makeBaseEditNotification(
 		rev, revTime, device, uid, tlfID, ro.RemovedType)
-	n.Filename = ro.getFinalPath().ChildPathNoPtr(ro.OldName).
+	n.Filename = ro.getFinalPath().ChildPathNoPtr(ro.obfuscatedOldName()).
 		CanonicalPathPlaintext()
 	n.Type = kbfsedits.NotificationDelete
 	return &n
@@ -778,15 +777,14 @@ func (ro *renameOp) checkValid() error {
 }
 
 func (ro *renameOp) obfuscatedOldName() data.PathPartString {
-	return co.OpCommon.obfuscatedName(ro.OldName)
+	return ro.obfuscatedName(ro.OldName)
 }
 
 func (ro *renameOp) obfuscatedNewName() data.PathPartString {
-	return co.OpCommon.obfuscatedName(ro.NewName)
+	return ro.obfuscatedName(ro.NewName)
 }
 
 func (ro *renameOp) String() string {
-	ob := ro.finalPath.Obfuscator()
 	return fmt.Sprintf("rename %s -> %s (%s)",
 		ro.obfuscatedOldName(), ro.obfuscatedNewName(), ro.RenamedType)
 }
@@ -826,11 +824,11 @@ func (ro *renameOp) ToEditNotification(
 	uid keybase1.UID, tlfID tlf.ID) *kbfsedits.NotificationMessage {
 	n := makeBaseEditNotification(
 		rev, revTime, device, uid, tlfID, ro.RenamedType)
-	n.Filename = ro.getFinalPath().ChildPathNoPtr(ro.NewName).
+	n.Filename = ro.getFinalPath().ChildPathNoPtr(ro.obfuscatedNewName()).
 		CanonicalPathPlaintext()
 	n.Type = kbfsedits.NotificationRename
 	n.Params = &kbfsedits.NotificationParams{
-		OldFilename: ro.oldFinalPath.ChildPathNoPtr(ro.OldName).
+		OldFilename: ro.oldFinalPath.ChildPathNoPtr(ro.obfuscatedOldName()).
 			CanonicalPathPlaintext(),
 	}
 	return &n
@@ -992,18 +990,18 @@ func (so *syncOp) checkConflict(
 		// type-specific intelligent conflict resolvers for file
 		// contents?)
 		toName, err := renamer.ConflictRename(
-			ctx, so, mergedOp.getFinalPath().TailName())
+			ctx, so, mergedOp.getFinalPath().TailName().Plaintext())
 		if err != nil {
 			return nil, err
 		}
 
 		if so.keepUnmergedTailName {
-			toName = so.getFinalPath().TailName()
+			toName = so.getFinalPath().TailName().Plaintext()
 		}
 
 		return &renameUnmergedAction{
 			fromName:                 so.getFinalPath().TailName(),
-			toName:                   toName,
+			toName:                   so.obfuscatedName(toName),
 			unmergedParentMostRecent: so.getFinalPath().ParentPath().TailPointer(),
 			mergedParentMostRecent: mergedOp.getFinalPath().ParentPath().
 				TailPointer(),
@@ -1259,9 +1257,12 @@ func (sao *setAttrOp) checkValid() error {
 	return sao.checkUpdatesValid()
 }
 
+func (sao *setAttrOp) obfuscatedEntryName() data.PathPartString {
+	return sao.obfuscatedName(sao.Name)
+}
+
 func (sao *setAttrOp) String() string {
-	ob := sao.finalPath.Obfuscator()
-	return fmt.Sprintf("setAttr %s (%s)", ob.Obfuscate(sao.Name), sao.Attr)
+	return fmt.Sprintf("setAttr %s (%s)", sao.obfuscatedEntryName(), sao.Attr)
 }
 
 func (sao *setAttrOp) Plaintext() string {
@@ -1288,25 +1289,26 @@ func (sao *setAttrOp) checkConflict(
 				// A directory has a conflict on an mtime attribute.
 				// Create a symlink entry with the unmerged mtime
 				// pointing to the merged entry.
-				symPath = mergedOp.getFinalPath().TailName()
+				symPath = mergedOp.getFinalPath().TailName().Plaintext()
 				causedByAttr = sao.Attr
 			}
 
 			// A set attr for the same attribute on the same file is a
 			// conflict.
 			fromName := sao.getFinalPath().TailName()
-			toName, err := renamer.ConflictRename(ctx, sao, fromName)
+			toName, err := renamer.ConflictRename(
+				ctx, sao, fromName.Plaintext())
 			if err != nil {
 				return nil, err
 			}
 
 			if sao.keepUnmergedTailName {
-				toName = sao.getFinalPath().TailName()
+				toName = sao.getFinalPath().TailName().Plaintext()
 			}
 
 			return &renameUnmergedAction{
 				fromName:                 fromName,
-				toName:                   toName,
+				toName:                   sao.obfuscatedName(toName),
 				symPath:                  symPath,
 				causedByAttr:             causedByAttr,
 				unmergedParentMostRecent: sao.getFinalPath().ParentPath().TailPointer(),

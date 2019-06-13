@@ -525,7 +525,8 @@ func (md *RootMetadata) loadCachedBlockChanges(
 			Tlf: md.TlfID(), Branch: data.MasterBranch},
 		Path: []data.PathNode{{
 			BlockPointer: md.data.cachedChanges.Info.BlockPointer,
-			Name:         fmt.Sprintf("<MD with revision %d>", md.Revision()),
+			Name: data.NewPathPartString(
+				fmt.Sprintf("<MD with revision %d>", md.Revision()), nil),
 		}},
 	}
 	fd := data.NewFileData(file, id, nil, md.ReadOnly(),
