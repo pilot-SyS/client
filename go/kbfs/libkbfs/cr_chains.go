@@ -395,6 +395,17 @@ func (cc *crChain) hasSetAttrOp() bool {
 	return false
 }
 
+func (cc *crChain) ensurePath(op op, ptr data.BlockPointer) {
+	if op.getFinalPath().IsValid() {
+		return
+	}
+
+	op.setFinalPath(data.Path{Path: []data.PathNode{{
+		BlockPointer: ptr,
+		Name:         data.NewPathPartString("", cc.obfuscator),
+	}}})
+}
+
 type renameInfo struct {
 	originalOldParent data.BlockPointer
 	oldName           string
@@ -460,12 +471,7 @@ func (ccs *crChains) addOp(ptr data.BlockPointer, op op) error {
 	}
 
 	// Make sure this op has a valid path with an obfuscator.
-	if !op.getFinalPath().IsValid() {
-		op.setFinalPath(data.Path{Path: []data.PathNode{{
-			BlockPointer: ptr,
-			Name:         data.NewPathPartString("", currChain.obfuscator),
-		}}})
-	}
+	currChain.ensurePath(op, ptr)
 	currChain.ops = append(currChain.ops, op)
 	return nil
 }

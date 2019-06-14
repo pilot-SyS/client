@@ -243,6 +243,9 @@ func prependOpsToChain(mostRecent data.BlockPointer, chains *crChains,
 		chain = chains.byMostRecent[mostRecent]
 		chain.ops = nil // will prepend it below
 	}
+	for _, op := range newOps {
+		chain.ensurePath(op, mostRecent)
+	}
 	// prepend it
 	chain.ops = append(newOps, chain.ops...)
 	return nil

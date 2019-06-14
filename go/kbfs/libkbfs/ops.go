@@ -1585,7 +1585,12 @@ func invertOpForLocalNotifications(oldOp op) (newOp op, err error) {
 	case *rekeyOp:
 		newOp = newRekeyOp()
 	}
-
+	newOp.setFinalPath(oldOp.getFinalPath())
+	if !newOp.getFinalPath().IsValid() {
+		fmt.Printf("BAD OP %#v\n", oldOp)
+	} else {
+		fmt.Printf("GOOD OP %#v\n", oldOp)
+	}
 	// Now reverse all the block updates.  Don't bother with bare Refs
 	// and Unrefs since they don't matter for local notification
 	// purposes.
