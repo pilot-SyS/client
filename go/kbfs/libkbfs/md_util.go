@@ -642,6 +642,7 @@ func decryptMDPrivateData(ctx context.Context, codec kbfscodec.Codec,
 	handle := rmdToDecrypt.GetTlfHandle()
 
 	var pmd PrivateMetadata
+	keyedForDevice := true
 	if handle.TypeForKeying() == tlf.PublicKeying {
 		if err := codec.Decode(serializedPrivateMetadata,
 			&pmd); err != nil {
@@ -672,6 +673,7 @@ func decryptMDPrivateData(ctx context.Context, codec kbfscodec.Codec,
 				// Rekey errors are expected if this client is a
 				// valid folder participant but doesn't have the
 				// shared crypt key.
+				keyedForDevice = false
 			} else {
 				return PrivateMetadata{}, err
 			}
@@ -699,11 +701,14 @@ func decryptMDPrivateData(ctx context.Context, codec kbfscodec.Codec,
 		return PrivateMetadata{}, err
 	}
 
-	secret, err := getMDObfuscationSecret(ctx, keyGetter, rmdWithKeys)
-	if err != nil {
-		return PrivateMetadata{}, err
+	var obfuscator data.Obfuscator
+	if keyedForDevice {
+		secret, err := getMDObfuscationSecret(ctx, keyGetter, rmdWithKeys)
+		if err != nil {
+			return PrivateMetadata{}, err
+		}
+		obfuscator = makeMDObfuscatorFromSecret(secret, mode)
 	}
-	obfuscator := makeMDObfuscatorFromSecret(secret, mode)
 	for _, op := range pmd.Changes.Ops {
 		// Add a temporary path with an obfuscator.
 		if !op.getFinalPath().IsValid() {
