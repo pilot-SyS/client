@@ -832,6 +832,10 @@ type mdDecryptionKeyGetter interface {
 	GetTLFCryptKeyForMDDecryption(ctx context.Context,
 		kmdToDecrypt, kmdWithKeys libkey.KeyMetadata) (
 		kbfscrypto.TLFCryptKey, error)
+	// GetFirstTLFCryptKey gets the first valid crypt key for the
+	// TLF with the given metadata.
+	GetFirstTLFCryptKey(ctx context.Context, kmd libkey.KeyMetadata) (
+		kbfscrypto.TLFCryptKey, error)
 }
 
 type blockDecryptionKeyGetter interface {
@@ -852,11 +856,6 @@ type blockKeyGetter interface {
 type KeyManager interface {
 	blockKeyGetter
 	mdDecryptionKeyGetter
-
-	// GetFirstTLFCryptKey gets the first valid crypt key for the
-	// TLF with the given metadata.
-	GetFirstTLFCryptKey(ctx context.Context, kmd libkey.KeyMetadata) (
-		kbfscrypto.TLFCryptKey, error)
 
 	// GetTLFCryptKeyOfAllGenerations gets the crypt keys of all generations
 	// for current devices. keys contains crypt keys from all generations, in

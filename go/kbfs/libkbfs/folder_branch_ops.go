@@ -1805,31 +1805,19 @@ func (fbo *folderBranchOps) setObfuscatorSecretLocked(
 	}
 
 	fbo.log.CDebugf(ctx, "Making the log obfuscator secret")
-	key, err := fbo.config.KeyManager().GetFirstTLFCryptKey(
-		ctx, fbo.head.ReadOnly())
+	secret, err := getMDObfuscationSecret(
+		ctx, fbo.config.KeyManager(), fbo.head.ReadOnly())
 	if err != nil {
 		return err
 	}
-	secret, err := key.DeriveSecret(obfuscatorDerivationString)
-	if err != nil {
-		return err
-	}
-	fbo.obSecret = data.NodeObfuscatorSecret(secret)
+	fbo.obSecret = secret
 	return nil
 }
 
 func (fbo *folderBranchOps) makeObfuscator() data.Obfuscator {
-	if !fbo.config.Mode().DoLogObfuscation() {
-		return nil
-	}
-
 	fbo.obLock.RLock()
 	defer fbo.obLock.RUnlock()
-
-	if fbo.obSecret != nil {
-		return nil
-	}
-	return data.NewNodeObfuscator(fbo.obSecret)
+	return makeMDObfuscatorFromSecret(fbo.obSecret, fbo.config.Mode())
 }
 
 func (fbo *folderBranchOps) setHeadLocked(
@@ -6035,7 +6023,7 @@ func (fbo *folderBranchOps) syncAllLocked(
 	// them.
 	syncChains.doNotUnrefPointers = syncChains.createdOriginals
 	head, _ := fbo.getHead(ctx, lState, mdNoCommit)
-	dummyHeadChains := newCRChainsEmpty()
+	dummyHeadChains := newCRChainsEmpty(fbo.makeObfuscator)
 	dummyHeadChains.mostRecentChainMDInfo = head
 
 	// Squash the batch of updates together into a set of blocks and

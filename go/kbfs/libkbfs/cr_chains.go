@@ -29,6 +29,7 @@ type crChain struct {
 	ops                  []op
 	original, mostRecent data.BlockPointer
 	file                 bool
+	obfuscator           data.Obfuscator
 }
 
 // collapse finds complementary pairs of operations that cancel each
@@ -447,6 +448,9 @@ type crChains struct {
 
 	// All the resolution ops from the branch, in order.
 	resOps []*resolutionOp
+
+	// Make per-chain obfuscators.
+	makeObfuscator func() data.Obfuscator
 }
 
 func (ccs *crChains) addOp(ptr data.BlockPointer, op op) error {
@@ -455,6 +459,14 @@ func (ccs *crChains) addOp(ptr data.BlockPointer, op op) error {
 		return errors.Errorf("Could not find chain for most recent ptr %v", ptr)
 	}
 
+	// Make sure this op has a valid path with an obfuscator.
+	p := op.getFinalPath()
+	if !p.IsValid() {
+		op.setFinalPath(data.Path{Path: []data.PathNode{{
+			BlockPointer: ptr,
+			Name:         data.NewPathPartString("", currChain.obfuscator),
+		}}})
+	}
 	currChain.ops = append(currChain.ops, op)
 	return nil
 }
@@ -471,7 +483,11 @@ func (ccs *crChains) addNoopChain(ptr data.BlockPointer) {
 	if _, ok := ccs.originals[ptr]; ok {
 		return
 	}
-	chain := &crChain{original: ptr, mostRecent: ptr}
+	chain := &crChain{
+		original:   ptr,
+		mostRecent: ptr,
+		obfuscator: ccs.makeObfuscator(),
+	}
 	ccs.byOriginal[ptr] = chain
 	ccs.byMostRecent[ptr] = chain
 }
@@ -491,7 +507,10 @@ func (ccs *crChains) makeChainForOp(op op) error {
 		chain, ok := ccs.byMostRecent[update.Unref]
 		if !ok {
 			// No matching chain means it's time to start a new chain
-			chain = &crChain{original: update.Unref}
+			chain = &crChain{
+				original:   update.Unref,
+				obfuscator: ccs.makeObfuscator(),
+			}
 			ccs.byOriginal[update.Unref] = chain
 		}
 		if chain.mostRecent.IsInitialized() {
@@ -673,7 +692,11 @@ func (ccs *crChains) makeChainForOp(op op) error {
 		_, ok := ccs.byMostRecent[realOp.File]
 		if !ok {
 			// pointer didn't change, so most recent is the same:
-			chain := &crChain{original: realOp.File, mostRecent: realOp.File}
+			chain := &crChain{
+				original:   realOp.File,
+				mostRecent: realOp.File,
+				obfuscator: ccs.makeObfuscator(),
+			}
 			ccs.byOriginal[realOp.File] = chain
 			ccs.byMostRecent[realOp.File] = chain
 		}
@@ -819,7 +842,7 @@ func (ccs *crChains) renamedParentAndName(original data.BlockPointer) (
 	return info.originalNewParent, info.newName, true
 }
 
-func newCRChainsEmpty() *crChains {
+func newCRChainsEmpty(makeObfuscator func() data.Obfuscator) *crChains {
 	return &crChains{
 		byOriginal:          make(map[data.BlockPointer]*crChain),
 		byMostRecent:        make(map[data.BlockPointer]*crChain),
@@ -830,6 +853,7 @@ func newCRChainsEmpty() *crChains {
 		toUnrefPointers:     make(map[data.BlockPointer]bool),
 		doNotUnrefPointers:  make(map[data.BlockPointer]bool),
 		originals:           make(map[data.BlockPointer]data.BlockPointer),
+		makeObfuscator:      makeObfuscator,
 	}
 }
 
@@ -885,7 +909,7 @@ func newCRChains(
 	ctx context.Context, codec kbfscodec.Codec, osg idutil.OfflineStatusGetter,
 	chainMDs []chainMetadata, fbo *folderBlockOps, identifyTypes bool) (
 	ccs *crChains, err error) {
-	ccs = newCRChainsEmpty()
+	ccs = newCRChainsEmpty(fbo.obfuscatorMaker())
 
 	// For each MD update, turn each update in each op into map
 	// entries and create chains for the BlockPointers that are

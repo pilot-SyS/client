@@ -157,10 +157,11 @@ type unflushedPathMDInfo struct {
 // blocks will need to be fetched.
 func addUnflushedPaths(ctx context.Context,
 	uid keybase1.UID, key kbfscrypto.VerifyingKey, codec kbfscodec.Codec,
-	log logger.Logger, osg idutil.OfflineStatusGetter, mdInfos []unflushedPathMDInfo,
-	cpp chainsPathPopulator, unflushedPaths unflushedPathsMap) error {
+	log logger.Logger, osg idutil.OfflineStatusGetter,
+	mdInfos []unflushedPathMDInfo, cpp chainsPathPopulator,
+	unflushedPaths unflushedPathsMap) error {
 	// Make chains over the entire range to get the unflushed files.
-	chains := newCRChainsEmpty()
+	chains := newCRChainsEmpty(cpp.obfuscatorMaker())
 	processedOne := false
 	for _, mdInfo := range mdInfos {
 		offline := keybase1.OfflineAvailability_NONE

@@ -153,8 +153,5 @@ func (n *nodeStandard) ChildName(name string) data.PathPartString {
 	if n.core.entryType != data.Dir {
 		panic("Only dirs can have child names")
 	}
-	if n.core.obfuscator == nil {
-		panic("Child names can only be obfuscated with an obfuscator")
-	}
 	return data.NewPathPartString(name, n.core.obfuscator)
 }

@@ -606,6 +606,32 @@ func reembedBlockChangesIntoCopyIfNeeded(
 		rmd.localTimestamp, rmd.putToServer), nil
 }
 
+func getMDObfuscationSecret(
+	ctx context.Context, keyGetter mdDecryptionKeyGetter,
+	kmd libkey.KeyMetadata) (data.NodeObfuscatorSecret, error) {
+	key, err := keyGetter.GetFirstTLFCryptKey(ctx, kmd)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := key.DeriveSecret(obfuscatorDerivationString)
+	if err != nil {
+		return nil, err
+	}
+	return data.NodeObfuscatorSecret(secret), nil
+}
+
+func makeMDObfuscatorFromSecret(
+	secret data.NodeObfuscatorSecret, mode InitMode) data.Obfuscator {
+	if !mode.DoLogObfuscation() {
+		return nil
+	}
+
+	if secret == nil {
+		return nil
+	}
+	return data.NewNodeObfuscator(secret)
+}
+
 // decryptMDPrivateData does not use uid if the handle is a public one.
 func decryptMDPrivateData(ctx context.Context, codec kbfscodec.Codec,
 	crypto Crypto, bcache data.BlockCache, bops BlockOps,
@@ -671,6 +697,21 @@ func decryptMDPrivateData(ctx context.Context, codec kbfscodec.Codec,
 			rmdToDecrypt.TlfID(), rmdToDecrypt.LatestKeyGeneration(),
 			pmd.Changes.Info)
 		return PrivateMetadata{}, err
+	}
+
+	secret, err := getMDObfuscationSecret(ctx, keyGetter, rmdWithKeys)
+	if err != nil {
+		return PrivateMetadata{}, err
+	}
+	obfuscator := makeMDObfuscatorFromSecret(secret, mode)
+	for _, op := range pmd.Changes.Ops {
+		// Add a temporary path with an obfuscator.
+		if !op.getFinalPath().IsValid() {
+			op.setFinalPath(data.Path{Path: []data.PathNode{{
+				BlockPointer: data.ZeroPtr,
+				Name:         data.NewPathPartString("", obfuscator),
+			}}})
+		}
 	}
 
 	return pmd, nil

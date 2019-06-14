@@ -489,7 +489,7 @@ func (cr *ConflictResolver) makeChains(ctx context.Context,
 	// If there are no new merged changes, don't make any merged
 	// chains.
 	if len(merged) == 0 {
-		return unmergedChains, newCRChainsEmpty(), nil
+		return unmergedChains, newCRChainsEmpty(nil), nil
 	}
 
 	mergedChains, err = newCRChainsForIRMDs(
@@ -1547,7 +1547,7 @@ func (cr *ConflictResolver) getSingleUnmergedPath(
 	data.Path, error) {
 	// Reuse some code by creating a new chains object
 	// consisting of only this node.
-	newChains := newCRChainsEmpty()
+	newChains := newCRChainsEmpty(cr.fbo.makeObfuscator)
 	newChains.byOriginal[chain.original] = chain
 	newChains.byMostRecent[chain.mostRecent] = chain
 	// Fake out the rest of the chains to populate newPtrs.

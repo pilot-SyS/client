@@ -3758,6 +3758,7 @@ func (fbo *folderBlockOps) MarkNode(
 
 type chainsPathPopulator interface {
 	populateChainPaths(context.Context, logger.Logger, *crChains, bool) error
+	obfuscatorMaker() func() data.Obfuscator
 }
 
 // populateChainPaths updates all the paths in all the ops tracked by
@@ -3768,6 +3769,10 @@ func (fbo *folderBlockOps) populateChainPaths(ctx context.Context,
 		ctx, fbo, log, fbo.nodeCache, includeCreates,
 		fbo.config.Mode().IsTestMode())
 	return err
+}
+
+func (fbo *folderBlockOps) obfuscatorMaker() func() data.Obfuscator {
+	return fbo.nodeCache.ObfuscatorMaker()
 }
 
 var _ chainsPathPopulator = (*folderBlockOps)(nil)
