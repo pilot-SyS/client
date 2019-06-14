@@ -460,8 +460,7 @@ func (ccs *crChains) addOp(ptr data.BlockPointer, op op) error {
 	}
 
 	// Make sure this op has a valid path with an obfuscator.
-	p := op.getFinalPath()
-	if !p.IsValid() {
+	if !op.getFinalPath().IsValid() {
 		op.setFinalPath(data.Path{Path: []data.PathNode{{
 			BlockPointer: ptr,
 			Name:         data.NewPathPartString("", currChain.obfuscator),
@@ -909,7 +908,11 @@ func newCRChains(
 	ctx context.Context, codec kbfscodec.Codec, osg idutil.OfflineStatusGetter,
 	chainMDs []chainMetadata, fbo *folderBlockOps, identifyTypes bool) (
 	ccs *crChains, err error) {
-	ccs = newCRChainsEmpty(fbo.obfuscatorMaker())
+	if fbo != nil {
+		ccs = newCRChainsEmpty(fbo.obfuscatorMaker())
+	} else {
+		ccs = newCRChainsEmpty(func() data.Obfuscator { return nil })
+	}
 
 	// For each MD update, turn each update in each op into map
 	// entries and create chains for the BlockPointers that are
@@ -1196,7 +1199,8 @@ func (ccs *crChains) findPathForDeleted(mostRecent data.BlockPointer) data.Path 
 		},
 		Path: []data.PathNode{{
 			BlockPointer: rootMostRecent,
-			Name:         data.NewPathPartString(mostRecent.String(), nil),
+			Name: data.NewPathPartString(
+				mostRecent.String(), ccs.makeObfuscator()),
 		}},
 	}
 }
@@ -1217,6 +1221,7 @@ func (ccs *crChains) findPathForCreated(createdChain *crChain) data.Path {
 					p := co.getFinalPath()
 					if !p.IsValid() {
 						p = ccs.findPathForCreated(chain)
+						co.setFinalPath(p)
 					}
 					return p.ChildPath(co.obfuscatedNewName(), mostRecent)
 				}
@@ -1242,7 +1247,8 @@ func (ccs *crChains) findPathForCreated(createdChain *crChain) data.Path {
 		},
 		Path: []data.PathNode{{
 			BlockPointer: rootMostRecent,
-			Name:         data.NewPathPartString(mostRecent.String(), nil),
+			Name: data.NewPathPartString(
+				mostRecent.String(), ccs.makeObfuscator()),
 		}},
 	}
 }
